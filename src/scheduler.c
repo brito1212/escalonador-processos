@@ -1,28 +1,28 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "scheduler.h"
+#include "../headers/scheduler.h"
 
-#define MAX_QUEUE_SIZE 100
+#define MAX_QUEUE_SIZE 10
 #define MAX_NUM_QUEUES 10
 
-typedef struct Process{
- int id;
- int priority;
- int time_left;
- int running;
-} Process;
+// typedef struct Process{
+//  int id;
+//  int priority;
+//  int time_left;
+//  int running;
+// } Process;
 
-typedef struct {
-    Process * processes[MAX_QUEUE_SIZE];
-    int head;
-    int tail;
-} Queue;
+// typedef struct {
+//     Process * processes[MAX_QUEUE_SIZE];
+//     int head;
+//     int tail;
+// } Queue;
 
-typedef struct {
-    Queue queues[MAX_NUM_QUEUES];
-    int num_queues;
-} Scheduler;
+// typedef struct {
+//     Queue queues[MAX_NUM_QUEUES];
+//     int num_queues;
+// } Scheduler;
 
 void scheduler_init(Scheduler *s) {
     s->num_queues = 0;
@@ -79,27 +79,27 @@ void *dequeue_by_priority(Queue *q){
     return item;
 }
 
-void *dequeue_by_time_left(Queue *q){
-    if (q->head == q->tail) {
-        return NULL; // queue is empty
-    }
+// void *dequeue_by_time_left(Queue *q){
+//     if (q->head == q->tail) {
+//         return NULL; // queue is empty
+//     }
     
-    int remove_idx = q->head;
-    int j = (q->head+1) % MAX_QUEUE_SIZE;
-    while(j!=q->tail){
-        if (q->processes[j]->time_left < q->processes[remove_idx]->time_left){
-            remove_idx = j;
-        }
-        j = (j+1)%MAX_QUEUE_SIZE;
-    }
-    Process * swap = q->processes[q->head];
-    q->processes[q->head] = q->processes[remove_idx];
-    q->processes[remove_idx] = swap;
-    void *item = q->processes[q->head];
-    q->head = (q->head +1) % MAX_QUEUE_SIZE;
+//     int remove_idx = q->head;
+//     int j = (q->head+1) % MAX_QUEUE_SIZE;
+//     while(j!=q->tail){
+//         if (q->processes[j]->time_left < q->processes[remove_idx]->time_left){
+//             remove_idx = j;
+//         }
+//         j = (j+1)%MAX_QUEUE_SIZE;
+//     }
+//     Process * swap = q->processes[q->head];
+//     q->processes[q->head] = q->processes[remove_idx];
+//     q->processes[remove_idx] = swap;
+//     void *item = q->processes[q->head];
+//     q->head = (q->head +1) % MAX_QUEUE_SIZE;
     
-    return item;
-}
+//     return item;
+// }
 
 int scheduler_enqueue(Scheduler *s, int queue_idx, Process *item) {
     if (queue_idx < 0 || queue_idx >= s->num_queues) {

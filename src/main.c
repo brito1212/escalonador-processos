@@ -1,22 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <scheduler.h>
+#include "../headers/scheduler.h"
 
-struct process {
-    char pid[10];
-    int arrival_time;
-    int burst_time;
-    int start_time;
-    int completion_time;
-    int priority;
-};
+#define MAX_PROCESSES 100
 
-int readFile(struct process* v, int i) {
-    char *filename = "C:\\PROJETOS\\ECOS13-LabSOEmbarcado\\PROJETO-SO-EMBARCADO\\processes_input.txt";
+int readFile(struct Process* v, int i) {
+    char *filename = "C:\\PROJETOS\\ECOS13-LabSOEmbarcado\\escalonador-processos\\escalonador-processos\\processes_input.txt"; //input txt full path 
     FILE *file = fopen(filename, "r"); 
     if (file == NULL) {
-        printf("Unable to open the file.\n");
+        printf("Não foi possivel encontrar o arquivo.\n");
+        printf("Verifique se o caminho do arquivp está correto.\n");
+
         return 0;
     }
 
@@ -50,8 +45,8 @@ int readFile(struct process* v, int i) {
 }
 
 int compareByArrivalTime(const void* a, const void* b) {
-    const struct process* processA = (const struct process*)a;
-    const struct process* processB = (const struct process*)b;
+    const struct Process* processA = (const struct Process*)a;
+    const struct Process* processB = (const struct Process*)b;
 
     if (processA->arrival_time < processB->arrival_time)
         return -1;
@@ -62,13 +57,13 @@ int compareByArrivalTime(const void* a, const void* b) {
     
 }
 
-void imprime_simples(struct process* v, int size){
+void imprime_simples(struct Process* v, int size){
     for (int j = 0; j < size; j++){
         printf("Process %s: Arrival Time %d, Burst Time %d\n", v[j].pid, v[j].arrival_time, v[j].burst_time);
     }
 }
 
-void get_process_array(struct process* temp_v,struct process* v, int size){    
+void get_process_array(struct Process* temp_v,struct Process* v, int size){    
     for (int i = 0; i < size; i++){
         strcpy(v[i].pid, temp_v[i].pid);
         v[i].arrival_time = temp_v[i].arrival_time;
@@ -78,12 +73,28 @@ void get_process_array(struct process* temp_v,struct process* v, int size){
 }
 
 int main(){
-    struct process temp_array[100];
+    struct Process temp_array[MAX_PROCESSES];
     int n = readFile(temp_array, n);
-    struct process p[n];
-    get_process_array(temp_array, p, n);
 
+    struct Process p[n];
+    get_process_array(temp_array, p, n);
     qsort(p, (sizeof(p)/sizeof(p[0])), sizeof(p[0]), compareByArrivalTime);
+
+    Scheduler s;
+    scheduler_init(&s);
+
+    int q1 = scheduler_add_queue(&s);
+
+    int queue_full = 0;
+    int processes_in_queue = 0;
+
+    while(queue_full != -1){
+        queue_full = scheduler_enqueue(&s, q1, &p[processes_in_queue]);
+        processes_in_queue++;
+    }
+
+    int completed = 0;
+
 
     return 0;
 }
