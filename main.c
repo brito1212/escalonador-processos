@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <scheduler.h>
 
 struct process {
     char pid[10];
