@@ -11,6 +11,7 @@ typedef struct Process{
     int start_time;
     int completion_time;
     int priority;
+    int enqueued;
 } Process;
 
 typedef struct {
@@ -38,7 +39,7 @@ void *dequeue_by_priority(Queue *q);
 
 int scheduler_enqueue(Scheduler *s, int queue_idx, Process *item);
 
-void *scheduler_dequeue(Scheduler *s);
+void *scheduler_dequeue(Scheduler *s, int dequeue_type);
 
 
 #endif
