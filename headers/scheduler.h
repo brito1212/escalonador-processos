@@ -8,16 +8,21 @@ typedef struct Process{
     char pid[10];
     int arrival_time;
     int burst_time;
+    int bursted_time;
+    int time_left;
     int start_time;
     int completion_time;
     int priority;
     int enqueued;
+    int quantum;
+    int group;
 } Process;
 
 typedef struct {
     Process * processes[MAX_QUEUE_SIZE];
     int head;
     int tail;
+    int current_group;
 } Queue;
 
 typedef struct {
@@ -41,5 +46,10 @@ int scheduler_enqueue(Scheduler *s, int queue_idx, Process *item);
 
 void *scheduler_dequeue(Scheduler *s, int dequeue_type);
 
+void *set_fair_share_quantum(Queue *q, int group);
+
+void *set_garantee_quantum(Queue *q);
+
+void *dequeue_by_garantee(Queue *q);
 
 #endif

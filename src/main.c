@@ -5,10 +5,12 @@
 
 #define MAX_PROCESSES 100
 
-int read_file(struct Process *v, int i)
+int current_group = 0;
+
+int read_file(struct Process *v, int i) 
 {
     printf("ReadFile1\n");
-    char *filename = "D:\\Desenvolvimento\\5oSemestre\\SO_Embarcado\\labFinal\\escalonador-processos\\processes_input.txt"; // input txt full path
+    char *filename = "C:\\PROJETOS\\ECOS13-LabSOEmbarcado\\escalonador-processos\\escalonador-processos\\processes_input.txt"; // input txt full path
     printf("ReadFile2\n");
     FILE *file = fopen(filename, "r");
     printf("ReadFile3\n");
@@ -41,6 +43,9 @@ int read_file(struct Process *v, int i)
         v[i].burst_time = b;
         v[i].priority = c;
         v[i].enqueued = 0;
+        v[i].quantum = 0;
+        v[i].bursted_time = 0;
+        v[i].time_left = b;
 
         char pid[10] = "P";
         strcat(pid, i_char);
@@ -59,8 +64,7 @@ int read_file(struct Process *v, int i)
 
 void imprime_simples(struct Process *v, int size)
 {
-    for (int j = 0; j < size; j++)
-    {
+    for (int j = 0; j < size; j++) {
         printf("Process %s: Arrival Time %d, Burst Time %d\n", v[j].pid, v[j].arrival_time, v[j].burst_time);
     }
 }
@@ -74,6 +78,9 @@ void get_process_array(struct Process *temp_v, struct Process *v, int size)
         v[i].burst_time = temp_v[i].burst_time;
         v[i].priority = temp_v[i].priority;
         v[i].enqueued = temp_v[i].enqueued;
+        v[i].quantum = temp_v[i].enqueued;
+        v[i].bursted_time = temp_v[i].bursted_time;
+        v[i].time_left = temp_v[i].time_left;
     }
 }
 
@@ -85,7 +92,13 @@ void enqueue_processes_by_time(Scheduler *s, int q, Process *p, int current_time
     {
         if (p[i].arrival_time <= current_time && p[i].enqueued == 0)
         {
+            p[i].group = current_group;
             queue_full = scheduler_enqueue(s, q, &p[i]);
+            if(current_group == 0){
+                current_group = 1;
+            }else{
+                current_group = 0;
+            }
         }
         else if (p[i].arrival_time > current_time)
         {
@@ -98,8 +111,8 @@ void enqueue_processes_by_time(Scheduler *s, int q, Process *p, int current_time
 void *write_output_file(Process *p, int n)
 {
     FILE *file;
-    char *filename = "D:\\Desenvolvimento\\5oSemestre\\SO_Embarcado\\labFinal\\escalonador-processos\\processes_output.txt";
-    file = fopen(filename, "w");
+    char *filename = "C:\\PROJETOS\\ECOS13-LabSOEmbarcado\\escalonador-processos\\escalonador-processos\\processes_output.txt";
+    file = fopen(filename, "a");
 
     if (file == NULL)
     {
@@ -107,25 +120,12 @@ void *write_output_file(Process *p, int n)
         return 0;
     }
 
-    char table_header[] = "P#   |\tAT\tBT\tST\tP";
-
-    fprintf(file, "%s\n", table_header);
-
-    for (int i = 0; i < n; i++)
-    {
-        fprintf(file, "%-4s |\t%d\t%d\t%d\t%d\n", p[i].pid, p[i].arrival_time, p[i].burst_time, p[i].start_time, p[i].priority);
-    }
-
-    fprintf(file, "\n");
-    fprintf(file, "\n");
-    fprintf(file, "\n");
-    fprintf(file, "tempo    \t");
+    
 
     int conclusion = 0;
     for (int i = 0; i < n; i++)
     {
-        fprintf(file, "%-3s\t", p[i].pid);
-        if (p[i].completion_time > conclusion)
+        if (p[i].completion_time > conclusion && p[i].enqueued == 1)
         {
             conclusion = p[i].completion_time;
         }
@@ -159,7 +159,7 @@ void *write_output_file(Process *p, int n)
                 }
                 else
                 {
-                    if (p[i].arrival_time >= time || p[i].burst_time == 0)
+                    if (p[i].arrival_time >= time || p[i].burst_time == 0 || p[i].enqueued == 0)
                     {
                         fprintf(file, "  \t");
                     }
@@ -169,6 +169,46 @@ void *write_output_file(Process *p, int n)
         fprintf(file, "\n");
         time++;
     }
+}
+
+void *write_output_file_header(Process *p, int n){
+
+    FILE *file;
+    char *filename = "C:\\PROJETOS\\ECOS13-LabSOEmbarcado\\escalonador-processos\\escalonador-processos\\processes_output.txt";
+    file = fopen(filename, "w");
+
+    if (file == NULL)
+    {
+        printf("Não foi possível abrir o arquivo de saída. \n");
+        return 0;
+    }
+
+    char table_header[] = "P#   |\tAT\tBT\tP";
+
+    fprintf(file, "%s\n", table_header);
+
+    for (int i = 0; i < n; i++)
+    {
+        fprintf(file, "%-4s |\t%d\t%d\t%d\n", p[i].pid, p[i].arrival_time, p[i].burst_time, p[i].priority);
+    }
+
+    fprintf(file, "\n");
+    fprintf(file, "\n");
+    fprintf(file, "\n");
+    fprintf(file, "tempo    \t");
+
+    int conclusion = 0;
+    for (int i = 0; i < n; i++)
+    {
+        fprintf(file, "%-3s\t", p[i].pid);
+        if (p[i].completion_time > conclusion)
+        {
+            conclusion = p[i].completion_time;
+        }
+    }
+
+    fprintf(file, "\n");
+
 }
 
 // realizar escalonamento garantido:
@@ -212,6 +252,7 @@ void guarantee_scheduling(Scheduler *s, int q, Process *p, int current_time)
     }
 }
 
+
 int main()
 {
 
@@ -222,7 +263,6 @@ int main()
 
     printf("Escalonador de processos\n");
     struct Process p[n];
-    struct Process *completed_processes[n];
     get_process_array(temp_array, p, n);
 
     Scheduler s;
@@ -232,18 +272,32 @@ int main()
 
     int current_time = 0;
     int completed = 0;
+    write_output_file_header(p, n);
     while (completed != n)
     {
         enqueue_processes_by_time(&s, q1, p, current_time);
-        void *item = scheduler_dequeue(&s, 0);
+
+        void *item = scheduler_dequeue(&s, 1);
         if (item != NULL)
         {
+            
             Process *process = item;
-            process->completion_time = process->burst_time + current_time;
+            if(process->time_left == 0) {
+                // completed_processes[completed] = process;
+                completed++;
+                print_process(process);
+            }
+            else {
+                scheduler_enqueue(&s, q1, item);
+                // completed_processes[completed] = process;
+                // completed++;
+            }
+
+            process->completion_time = process->bursted_time + current_time;
             process->start_time = current_time;
             current_time = process->completion_time + 1;
-            completed_processes[completed] = process;
-            completed++;
+
+            // write_output_file(p, n);
         }
         else
         {
@@ -251,6 +305,8 @@ int main()
         }
     }
 
-    write_output_file(p, n);
+    
     return 0;
 }
+
+
