@@ -93,8 +93,6 @@ void *dequeue_by_priority(Queue *q){
     Process *item = q->processes[q->head];
     q->head = (q->head +1) % MAX_QUEUE_SIZE;
     
-    item->bursted_time = item->burst_time;
-    item->time_left = item->burst_time - item->bursted_time;
     return item;
 }
 
