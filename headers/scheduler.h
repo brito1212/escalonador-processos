@@ -8,10 +8,13 @@ typedef struct Process{
     char pid[10];
     int arrival_time;
     int burst_time;
+    int bursted_time;
     int start_time;
     int completion_time;
     int priority;
     int enqueued;
+    int tickets;
+    int time_left;
 } Process;
 
 typedef struct {
@@ -40,6 +43,8 @@ void *dequeue_by_priority(Queue *q);
 int scheduler_enqueue(Scheduler *s, int queue_idx, Process *item);
 
 void *scheduler_dequeue(Scheduler *s, int dequeue_type);
+
+void *lotteryScheduler(Queue *q);
 
 
 #endif
