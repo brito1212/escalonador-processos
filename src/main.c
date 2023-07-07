@@ -94,11 +94,7 @@ void enqueue_processes_by_time(Scheduler *s, int q, Process *p, int current_time
         {
             p[i].group = current_group;
             queue_full = scheduler_enqueue(s, q, &p[i]);
-            if(current_group == 0){
-                current_group = 1;
-            }else{
-                current_group = 0;
-            }
+            
         }
         else if (p[i].arrival_time > current_time)
         {
@@ -112,7 +108,7 @@ void *write_output_file(Process *p, int n)
 {
     FILE *file;
     char *filename = "C:\\PROJETOS\\ECOS13-LabSOEmbarcado\\escalonador-processos\\escalonador-processos\\processes_output.txt";
-    file = fopen(filename, "a");
+    file = fopen(filename, "w");
 
     if (file == NULL)
     {
@@ -121,11 +117,25 @@ void *write_output_file(Process *p, int n)
     }
 
     
+    char table_header[] = "P#   |\tAT\tBT\tP";
+
+    fprintf(file, "%s\n", table_header);
+
+    for (int i = 0; i < n; i++)
+    {
+        fprintf(file, "%-4s |\t%d\t%d\t%d\n", p[i].pid, p[i].arrival_time, p[i].burst_time, p[i].priority);
+    }
+
+    fprintf(file, "\n");
+    fprintf(file, "\n");
+    fprintf(file, "\n");
+    fprintf(file, "tempo    \t");
 
     int conclusion = 0;
     for (int i = 0; i < n; i++)
     {
-        if (p[i].completion_time > conclusion && p[i].enqueued == 1)
+        fprintf(file, "%-3s\t", p[i].pid);
+        if (p[i].completion_time > conclusion)
         {
             conclusion = p[i].completion_time;
         }
@@ -256,7 +266,6 @@ void guarantee_scheduling(Scheduler *s, int q, Process *p, int current_time)
 int main()
 {
 
-    printf("Escalonador de processos\n");
     struct Process temp_array[MAX_PROCESSES];
     printf("Escalonador de processos\n");
     int n = read_file(temp_array, n);
@@ -272,40 +281,31 @@ int main()
 
     int current_time = 0;
     int completed = 0;
-    write_output_file_header(p, n);
+
     while (completed != n)
     {
         enqueue_processes_by_time(&s, q1, p, current_time);
 
-        void *item = scheduler_dequeue(&s, 1);
+        void *item = scheduler_dequeue(&s, 0);
         if (item != NULL)
         {
             
             Process *process = item;
-            if(process->time_left == 0) {
-                // completed_processes[completed] = process;
-                completed++;
-                print_process(process);
-            }
-            else {
-                scheduler_enqueue(&s, q1, item);
-                // completed_processes[completed] = process;
-                // completed++;
-            }
-
-            process->completion_time = process->bursted_time + current_time;
+            process->completion_time = process->burst_time + current_time;
             process->start_time = current_time;
             current_time = process->completion_time + 1;
-
+            completed++;
             // write_output_file(p, n);
         }
         else
         {
             current_time++;
         }
+        printf("current time: %d \n\n", current_time);
+
     }
 
-    
+    write_output_file(p, n);
     return 0;
 }
 
